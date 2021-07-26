@@ -1,5 +1,11 @@
 #include <cstdio>
 #include <pcap.h>
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <stdint.h>
+#include <unistd.h>
 #include "ethhdr.h"
 #include "arphdr.h"
 
@@ -15,6 +21,28 @@ void usage() {
     printf("sample : send-arp wlan0 192.168.10.2 192.168.10.1\n");
 }
 
+int get_mymac(char* mac, char* interface){
+    int sock;
+    struct ifreq ifr;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0){
+        printf("Fail to get interface MAC address - socket() failed - %m\n");
+        return -1;
+    }
+
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+    if (ioctl(sock, SIOCGIFHWADDR, &ifr)<0){
+        printf("Fail to get interface MAC address - ioctl(SIOCSIFHWADDR) failed - %m\n");
+        close(sock);
+        return -1;
+    }
+    memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
+    close(sock);
+    printf("Sucess to get interface(%s) MAC address ");
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		usage();
@@ -28,6 +56,12 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "couldn't open device %s(%s)\n", dev, errbuf);
 		return -1;
 	}
+
+    // get mac address
+    get_mymac();
+    get_sendermac();
+
+
 
 	EthArpPacket packet;
 
