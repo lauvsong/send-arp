@@ -21,7 +21,7 @@ void usage() {
     printf("sample : send-arp wlan0 192.168.10.2 192.168.10.1\n");
 }
 
-int get_mymac(char* mac, char* interface){
+int get_mymac(uint8_t* mac, char* interface){
     int sock;
     struct ifreq ifr;
 
@@ -39,12 +39,12 @@ int get_mymac(char* mac, char* interface){
     }
     memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
     close(sock);
-    printf("Sucess to get interface(%s) MAC address ");
+    printf("Sucess to get interface(%s) MAC address");
     return 0;
 }
 
 int main(int argc, char* argv[]) {
-	if (argc != 2) {
+    if (argc < 3 || argc % 2 == 0) {
 		usage();
 		return -1;
 	}
@@ -58,9 +58,9 @@ int main(int argc, char* argv[]) {
 	}
 
     // get mac address
-    get_mymac();
-    get_sendermac();
-
+    uint8_t* mac;
+    get_mymac(mac, argv[1]);
+    Mac sdr_mac = Mac(mac);
 
 
 	EthArpPacket packet;
