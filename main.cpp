@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 
         Ip tip(argv[i+1]);
         Mac tmac;
-        attack(tip);
+        attack(tip, smac, sip, myip, mymac, handle);
     }
     pcap_close(handle);
 }
