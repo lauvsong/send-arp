@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
     Mac mymac(mac);
     Ip myip(ip);
 
-    for (int i=1;i<=argc;i+=2){
+    for (int i=1;i<argc;i+=2){
         // get sender info
         Ip sip = Ip(argv[i]);
         Mac smac;
