@@ -121,7 +121,7 @@ int attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 3 || argc % 2 == 0) {
+    if (argc < 4 || argc % 2 == 1) {
 		usage();
 		return -1;
 	}
