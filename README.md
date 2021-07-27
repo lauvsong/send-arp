@@ -10,7 +10,7 @@ sample : send-arp wlan0 192.168.10.2 192.168.10.1
 
 ### Result example
 ```
-Attack MAC: {Attacker MAC}
+Attacker MAC: {Attacker MAC}
 Attacker IP: {Attacker IP}
 
 ======Pair 1======

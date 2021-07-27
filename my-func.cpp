@@ -41,7 +41,7 @@ void get_myinfo(char* interface, Mac& mymac, Ip& myip){
     mymac = Mac(mac);
     myip = Ip(ip);
 
-    printf("Attack MAC: %s\n", std::string(mymac).c_str());
+    printf("Attacker MAC: %s\n", std::string(mymac).c_str());
     printf("Attacker IP: %s\n", std::string(myip).c_str());
 }
 
