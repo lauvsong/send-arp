@@ -5,8 +5,11 @@ void usage() {
     printf("sample : send-arp wlan0 192.168.10.2 192.168.10.1\n");
 }
 
-void get_myinfo(char* interface, uint8_t* mac, char* ip){
+void get_myinfo(char* interface, Mac& mymac, Ip& myip){
     // Reference: https://pencil1031.tistory.com/66
+    uint8_t mac[6];
+    char ip[40];
+
     int sock;
     struct ifreq ifr;
 
@@ -35,9 +38,11 @@ void get_myinfo(char* interface, uint8_t* mac, char* ip){
 
     close(sock);
 
-    printf("Attack MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-           mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    printf("Attacker IP: %s\n", ip);
+    mymac = Mac(mac);
+    myip = Ip(ip);
+
+    printf("Attack MAC: %s\n", std::string(mymac).c_str());
+    printf("Attacker IP: %s\n", std::string(myip).c_str());
 }
 
 void get_smac(pcap_t* handle, Mac& smac, Ip& sip, Ip& myip, Mac& mymac){
@@ -78,10 +83,8 @@ void get_smac(pcap_t* handle, Mac& smac, Ip& sip, Ip& myip, Mac& mymac){
         if (ntohs(reply->arp_.op_) != ArpHdr::Reply) continue;
         if (ntohl(reply->arp_.sip_) != sip) continue;
 
-        smac = Mac(reply->arp_.smac_);
-        uint8_t* smac_str = (uint8_t*)reply->arp_.smac_;
-        printf("Sender MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-               smac_str[0],smac_str[1],smac_str[2],smac_str[3],smac_str[4],smac_str[5]);
+        smac = Mac(reply->arp_.smac_);;
+        printf("Sender MAC: %s\n", std::string(smac).c_str());
         break;
     }
 }

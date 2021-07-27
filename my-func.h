@@ -19,6 +19,6 @@ struct EthArpPacket final {
 #pragma pack(pop)
 
 void usage();
-void get_myinfo(char* interface,uint8_t* mac, char* ip);
+void get_myinfo(char* interface, Mac& mac, Ip& ip);
 void get_smac(pcap_t* handle, Mac& smac, Ip& sip, Ip& myip, Mac& mymac);
 void attack(pcap_t* handle, Mac& mymac, Ip& tip, Mac& smac, Ip& sip);

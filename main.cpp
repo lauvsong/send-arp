@@ -14,13 +14,10 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-    // get attacker info
-    uint8_t mac[6];
-    char ip[40];
-    get_myinfo(dev, mac, ip);
-
-    Mac mymac(mac);
-    Ip myip(ip);
+    // get attacker info    
+    Mac mymac;
+    Ip myip;
+    get_myinfo(dev, mymac, myip);
 
     for (int i=2;i<argc;i+=2){
         // get sender MAC
