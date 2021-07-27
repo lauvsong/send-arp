@@ -21,7 +21,7 @@ void usage() {
     printf("sample : send-arp wlan0 192.168.10.2 192.168.10.1\n");
 }
 
-void get_myinfo(uint8_t* mac, char* ip, char* interface){
+void get_myinfo(char* interface,uint8_t* mac, char* ip){
     int sock;
     struct ifreq ifr;
 
@@ -52,10 +52,10 @@ void get_myinfo(uint8_t* mac, char* ip, char* interface){
     printf("Sucess to get interface(%s) MAC address");
 }
 
-void get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
+void get_smac(pcap_t* handle, Mac& smac, Ip& sip, Ip& myip, Mac& mymac){
     EthArpPacket packet;
 
-    packet.eth_.dmac_ = Mac("ff:ff:ff:ff:ff:ff");
+    packet.eth_.dmac_ = Mac::broadcastMac();
     packet.eth_.smac_ = mymac;
 
     packet.eth_.type_ = htons(EthHdr::Arp);
@@ -67,7 +67,7 @@ void get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     packet.arp_.op_ = htons(ArpHdr::Request);
     packet.arp_.smac_ = mymac;
     packet.arp_.sip_ = htonl(myip);
-    packet.arp_.tmac_ = Mac("00:00:00:00:00:00");
+    packet.arp_.tmac_ = Mac::nullMac();
     packet.arp_.tip_ = htonl(sip);
 
     int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
@@ -94,7 +94,7 @@ void get_smac(Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
     }
 }
 
-void attack(Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac, pcap_t* handle){
+void attack(pcap_t* handle, Ip& tip, Mac& smac, Ip& sip, Ip& myip, Mac& mymac){
     EthArpPacket packet;
 
     packet.eth_.dmac_ = smac;
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     // get my info
     uint8_t* mac = nullptr;
     char* ip = nullptr;
-    get_myinfo(mac, ip, dev);
+    get_myinfo(dev, mac, ip);
 
     Mac mymac(mac);
     Ip myip(ip);
@@ -145,11 +145,11 @@ int main(int argc, char* argv[]) {
         // get sender info
         Ip sip = Ip(argv[i]);
         Mac smac;
-        get_smac(smac, sip, myip, mymac, handle);
+        get_smac(handle, smac, sip, myip, mymac);
 
         Ip tip(argv[i+1]);
         Mac tmac;
-        attack(tip, smac, sip, myip, mymac, handle);
+        attack(handle, tip, smac, sip, myip, mymac);
     }
     pcap_close(handle);
     return 0;
