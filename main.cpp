@@ -19,7 +19,9 @@ int main(int argc, char* argv[]) {
     Ip myip;
     get_myinfo(dev, mymac, myip);
 
+    int cnt = 0;
     for (int i=2;i<argc;i+=2){
+        printf("\n======Pair %d======\n", ++cnt);
         // get sender MAC
         Ip sip(argv[i]);
         Mac smac;
